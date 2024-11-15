@@ -1,48 +1,38 @@
 # gNMI Streamer
 
-### Server
+## Server
 
 ```bash
-$ go run main.go
-2024/11/14 20:01:23 listening on [::]:9339
-2024/11/14 20:01:31 peer: 127.0.0.1:54710 target: "dev1" subscription: subscribe:{prefix:{target:"dev1"} subscription:{path:{element:"a" elem:{name:"a"}}}}
-2024/11/14 20:01:31 start processing Subscription for dev1
-2024/11/14 20:01:31 end processSubscription for dev1
+$ make server
+2024/11/15 17:41:09 listening on [::]:9339
+2024/11/15 17:41:12 peer: 127.0.0.1:44106 target: "dev1" subscription: subscribe:{prefix:{target:"dev1"} subscription:{path:{elem:{name:"state"} elem:{name:"router" key:{key:"router-name" value:"*"}} elem:{name:"interface" key:{key:"interface-name" value:"*"}} elem:{name:"statistics"} elem:{name:"ip"} elem:{name:"in-octets"}}}}
+2024/11/15 17:41:12 start processing Subscription for dev1
+2024/11/15 17:41:12 end processSubscription for dev1
+2024/11/15 17:41:37 peer: 127.0.0.1:44106 target "dev1" subscription: end: "subscribe:{prefix:{target:\"dev1\"} subscription:{path:{elem:{name:\"state\"} elem:{name:\"router\" key:{key:\"router-name\" value:\"*\"}} elem:{name:\"interface\" key:{key:\"interface-name\" value:\"*\"}} elem:{name:\"statistics\"} elem:{name:\"ip\"} elem:{name:\"in-octets\"}}}}"
 ```
 
-### Clients
+## Client
 
-#### Local
+### Local
 
 ```bash
 $ cd client
 ```
 
 ```bash
+$ cd client
 $ go run main.go 
-2024/11/14 20:01:31 Subscribing
+2024/11/15 17:52:55 Subscribing
 RESPONSE:
-  PATH: element:"a" element:"b" element:"c" element:"d"
-  VALUE: int_val:805
+  PATH: elem:{name:"a"} elem:{name:"b" key:{key:"n" value:"c"}} elem:{name:"d"}
+  VALUE: int_val:635
 RESPONSE:
-  PATH: element:"a" element:"b" element:"d" element:"e"
-  VALUE: int_val:668
-RESPONSE:
-  PATH: element:"a" element:"c" element:"d" element:"e"
-  VALUE: int_val:935
-RESPONSE:
-  PATH: element:"a" element:"b" element:"c" element:"d"
-  VALUE: int_val:580
-RESPONSE:
-  PATH: element:"a" element:"b" element:"d" element:"e"
-  VALUE: int_val:151
-RESPONSE:
-  PATH: element:"a" element:"c" element:"d" element:"e"
-  VALUE: int_val:494
+  PATH: elem:{name:"a"} elem:{name:"b" key:{key:"n" value:"c"}} elem:{name:"d"}
+  VALUE: int_val:903
 ...
 ```
 
-#### gNMIc
+### gNMIc
 
 
 ```bash
@@ -50,101 +40,106 @@ bash -c "$(curl -sL https://get-gnmic.openconfig.net)"
 ```
 
 ```bash
-unset https_proxy
-$ gnmic -a [::]:9339 --skip-verify --target dev1 subscribe --path "a"
+$ gnmic -a [::]:9339 --skip-verify --target dev1 subscribe --path "/state/router[router-name=*]/interface[interface-name=*]/statistics/ip/in-octets"
 {
   "sync-response": true
 }
 {
   "source": "[::]:9339",
-  "subscription-name": "default-1731616427",
+  "subscription-name": "default-1731692472",
   "timestamp": -6795364578871345151,
   "time": "1754-08-30T22:43:41.128654849Z",
   "target": "dev1",
   "updates": [
     {
-      "Path": "",
+      "Path": "state/router[router-name=dev1]/interface[interface-name=*]/statistics/ip/in-octets",
       "values": {
-        "": 239
+        "state/router/interface/statistics/ip/in-octets": 5
       }
     }
   ]
 }
 {
   "source": "[::]:9339",
-  "subscription-name": "default-1731616427",
-  "timestamp": -6795364578871345150,
-  "time": "1754-08-30T22:43:41.12865485Z",
-  "target": "dev1",
-  "updates": [
-    {
-      "Path": "",
-      "values": {
-        "": 101
-      }
-    }
-  ]
-}
-{
-  "source": "[::]:9339",
-  "subscription-name": "default-1731616427",
-  "timestamp": -6795364578871345149,
-  "time": "1754-08-30T22:43:41.128654851Z",
-  "target": "dev1",
-  "updates": [
-    {
-      "Path": "",
-      "values": {
-        "": 498
-      }
-    }
-  ]
-}
-{
-  "source": "[::]:9339",
-  "subscription-name": "default-1731616427",
-  "timestamp": -6795364578871345149,
-  "time": "1754-08-30T22:43:41.128654851Z",
-  "target": "dev1",
-  "updates": [
-    {
-      "Path": "",
-      "values": {
-        "": 306
-      }
-    }
-  ]
-}
-{
-  "source": "[::]:9339",
-  "subscription-name": "default-1731616427",
+  "subscription-name": "default-1731692472",
   "timestamp": -6795364578871345151,
   "time": "1754-08-30T22:43:41.128654849Z",
   "target": "dev1",
   "updates": [
     {
-      "Path": "",
+      "Path": "state/router[router-name=dev1]/interface[interface-name=*]/statistics/ip/in-octets",
       "values": {
-        "": 154
+        "state/router/interface/statistics/ip/in-octets": 783
       }
     }
   ]
 }
-{
-  "source": "[::]:9339",
-  "subscription-name": "default-1731616427",
-  "timestamp": -6795364578871345150,
-  "time": "1754-08-30T22:43:41.12865485Z",
-  "target": "dev1",
-  "updates": [
-    {
-      "Path": "",
-      "values": {
-        "": 738
+```
+
+
+```bash
+$ unset https_proxy
+$ unset HTTPS_PROXY
+$ gnmic -a [::]:9339 --skip-verify --target dev2 subscribe --path "a" --format prototext
+update: {
+  timestamp: -6795364578871345151
+  prefix: {
+    target: "dev2"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "a"
+      }
+      elem: {
+        name: "b"
+        key: {
+          key: "n"
+          value: "c"
+        }
+      }
+      elem: {
+        name: "d"
       }
     }
-  ]
+    val: {
+      int_val: 81
+    }
+  }
+}
+
+sync_response: true
+
+update: {
+  timestamp: -6795364578871345151
+  prefix: {
+    target: "dev2"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "a"
+      }
+      elem: {
+        name: "b"
+        key: {
+          key: "n"
+          value: "c"
+        }
+      }
+      elem: {
+        name: "d"
+      }
+    }
+    val: {
+      int_val: 634
+    }
+  }
 }
 ...
 ```
 
+## Credits
+
+- [SUBSCRIBE](https://github.com/openconfig/gnmi/tree/master/subscribe)
+- [PATH](https://github.com/openconfig/gnmic/tree/main/pkg/api/path)

@@ -21,15 +21,14 @@ const (
 )
 
 func main() {
-	device := "dev1"
-	query := client.Path{"a"}
+	device := "dev2"
 	count := 0
 	sync := 0
 
 	q := client.Query{
 		Addrs:   []string{net.JoinHostPort(gNMIHOST, gNMIPORT)},
 		Target:  device,
-		Queries: []client.Path{query},
+		Queries: []client.Path{{"*"}},
 		Type:    client.Stream,
 
 		ProtoHandler: func(msg proto.Message) error {

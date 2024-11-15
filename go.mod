@@ -5,6 +5,8 @@ go 1.23.2
 require (
 	github.com/google/go-cmp v0.5.7
 	github.com/openconfig/gnmi v0.11.0
+	github.com/openconfig/grpctunnel v0.0.0-20220819142823-6f5422b8ca70
+	go.uber.org/automaxprocs v1.6.0
 	google.golang.org/grpc v1.40.0
 	google.golang.org/protobuf v1.28.0
 )
@@ -16,7 +18,6 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/openconfig/goyang v0.0.0-20200115183954-d0a48929f0ea // indirect
-	github.com/openconfig/grpctunnel v0.0.0-20220819142823-6f5422b8ca70 // indirect
 	github.com/openconfig/ygot v0.6.0 // indirect
 	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
 	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
