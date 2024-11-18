@@ -29,9 +29,10 @@ import (
 )
 
 const (
-	gNMIHOST    = ""
-	gNMIPORT    = "9339"
-	gNMICadence = 5
+	HOST    = ""
+	PORT    = "9339"
+	CADENCE = 5 * time.Second
+	UPDATES = "updates.json"
 )
 
 func startServer(ctx context.Context, c *cache.Cache, opts ...subscribe.Option) (string, *subscribe.Server, func(), error) {
@@ -41,7 +42,7 @@ func startServer(ctx context.Context, c *cache.Cache, opts ...subscribe.Option) 
 	}
 
 	lc := net.ListenConfig{}
-	lis, err := lc.Listen(ctx, "tcp", net.JoinHostPort(gNMIHOST, gNMIPORT))
+	lis, err := lc.Listen(ctx, "tcp", net.JoinHostPort(HOST, PORT))
 	if err != nil {
 		return "", nil, nil, fmt.Errorf("can't set listener: %w", err)
 	}
@@ -62,9 +63,8 @@ func startServer(ctx context.Context, c *cache.Cache, opts ...subscribe.Option) 
 // sendUpdatesNew generates an update for each supplied path incrementing the
 // timestamp and value for each using Elem instead of Elements
 func sendUpdates(c *cache.Cache, updates map[string][]string, timestamp *time.Time) {
-	*timestamp = timestamp.Add(time.Nanosecond)
-
 	for device, paths := range updates {
+		*timestamp = timestamp.Add(time.Nanosecond)
 		stream := make([]*pb.Update, 0, len(paths))
 
 		for _, p := range paths {
@@ -98,14 +98,43 @@ func sendUpdates(c *cache.Cache, updates map[string][]string, timestamp *time.Ti
 
 }
 
+func periodic(period time.Duration, fn func()) {
+	if period == 0 {
+		return
+	}
+	t := time.NewTicker(period)
+	defer t.Stop()
+	for range t.C {
+		fn()
+	}
+}
+
 func run(ctx context.Context) error {
+	// Read Targets config file.
+	u, err := os.Open(UPDATES)
+	if err != nil {
+		return fmt.Errorf("can't read Updates file: %w", err)
+	}
+	updates, err := GetUpdates(u)
+	if err != nil {
+		return fmt.Errorf("can't parse Updates info: %w", err)
+	}
+
+	// Get Target devices
+	t := make([]string, 0, len(updates))
+	for k := range updates {
+		t = append(t, k)
+	}
 
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
-	// Setups a Cache for a list of targets
-	targets := client.Path{"dev1", "dev2"}
+	// Setups a Cache for the list of targets
+	targets := client.Path(t)
 	c := cache.New(targets)
+	// Start functions to periodically update metadata stored in the cache for each target.
+	go periodic(CADENCE, c.UpdateMetadata)
+	go periodic(CADENCE, c.UpdateSize)
 
 	addr, server, teardown, err := startServer(ctx, c)
 	if err != nil {
@@ -118,22 +147,12 @@ func run(ctx context.Context) error {
 
 	log.Infof("listening on %v", addr)
 
-	updates := map[string][]string{
-		"dev1": {
-			"/state/router[router-name=dev1]/interface[interface-name=*]/statistics/ip/in-octets",
-			"/state/router[router-name=dev1]/interface[interface-name=*]/statistics/ip/out-octets",
-			"/terminal-device/logical-channels/channel[index=*]/otn/state/esnr/instant",
-		},
-		"dev2": {
-			"/a/b[n=c]/d",
-		},
-	}
-
-	ticker := time.NewTicker(gNMICadence * time.Second)
+	ticker := time.NewTicker(CADENCE)
 	quit := make(chan struct{})
 	go func() {
 		for {
-			var timestamp time.Time
+			//var timestamp time.Time
+			timestamp := time.Now()
 			select {
 			case <-ticker.C:
 				sendUpdates(c, updates, &timestamp)
@@ -159,13 +178,10 @@ func main() {
 	flag.Parse()
 	_, err := maxprocs.Set()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error setting GOMAXPROCS: %s\n", err)
-		os.Exit(1)
+		log.Exitf("error setting GOMAXPROCS: %s\n", err)
 	}
 
-	ctx := context.Background()
-	if err := run(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "error starting the gNMI server: %s\n", err)
-		os.Exit(1)
+	if err := run(context.Background()); err != nil {
+		log.Exitf("error starting the gNMI server: %s\n", err)
 	}
 }
