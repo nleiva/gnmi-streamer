@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"time"
+	"os"
+	"os/signal"
 
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"google.golang.org/protobuf/proto"
@@ -24,6 +25,9 @@ func main() {
 	device := "dev2"
 	count := 0
 	sync := 0
+
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
 
 	q := client.Query{
 		Addrs:   []string{net.JoinHostPort(gNMIHOST, gNMIPORT)},
@@ -57,10 +61,9 @@ func main() {
 
 	log.Printf("Subscribing")
 	c := client.BaseClient{}
-	err := c.Subscribe(context.Background(), q, gnmiclient.Type)
+
+	err := c.Subscribe(ctx, q, gnmiclient.Type)
 	if err != nil {
 		log.Fatalf("can't subscribe to gNMI server: %v", err)
 	}
-
-	time.Sleep(60 * time.Second)
 }

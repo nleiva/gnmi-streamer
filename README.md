@@ -20,8 +20,7 @@ $ cd client
 ```
 
 ```bash
-$ cd client
-$ go run main.go 
+$ make client
 2024/11/15 17:52:55 Subscribing
 RESPONSE:
   PATH: elem:{name:"a"} elem:{name:"b" key:{key:"n" value:"c"}} elem:{name:"d"}
@@ -143,3 +142,7 @@ update: {
 
 - [SUBSCRIBE](https://github.com/openconfig/gnmi/tree/master/subscribe)
 - [PATH](https://github.com/openconfig/gnmic/tree/main/pkg/api/path)
+
+## References
+
+- [SNMP is dead](https://pc.nanog.org/static/published/meetings/NANOG73/1677/20180625_Shakir_Snmp_Is_Dead_v1.pdf): Describes the a gNMI caching collector from multiple gNMI sources (targets) to multiple gNMI clients. [recording](https://youtu.be/McNm_WfQTHw?si=lPy5a7qIdIKMW7ne)

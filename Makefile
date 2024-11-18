@@ -30,12 +30,10 @@ run: fmt
 	go build && ./$(EXECUTABLE)
 
 server: fmt
-	go build && ./$(EXECUTABLE)
+	go build && ./$(EXECUTABLE) -logtostderr
 
 client: fmt
-	cd client
-	go run main.go
-	cd ..
+	cd client; go run main.go; cd ..
 
 build: fmt test
 	@echo version: $(VERSION)

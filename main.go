@@ -6,8 +6,8 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
-	"log"
 	"math/rand/v2"
 	"net"
 	"os"
@@ -15,17 +15,17 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/golang/glog"
 	"github.com/openconfig/gnmi/cache"
 	"github.com/openconfig/gnmi/client"
+	"github.com/openconfig/gnmi/subscribe"
 	"github.com/openconfig/gnmi/testing/fake/testing/grpc/config"
 	"github.com/openconfig/gnmi/value"
+	"github.com/openconfig/gnmic/pkg/api/path"
 	"google.golang.org/grpc"
 
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"go.uber.org/automaxprocs/maxprocs"
-
-	"github.com/nleiva/gnmi-streamer/path"
-	"github.com/nleiva/gnmi-streamer/subscribe"
 )
 
 const (
@@ -34,52 +34,49 @@ const (
 	gNMICadence = 5
 )
 
-func startServer(ctx context.Context, targets []string, opts ...subscribe.Option) (string, *subscribe.Server, *cache.Cache, func(), error) {
-	c := cache.New(targets)
+func startServer(ctx context.Context, c *cache.Cache, opts ...subscribe.Option) (string, *subscribe.Server, func(), error) {
 	p, err := subscribe.NewServer(c, opts...)
 	if err != nil {
-		return "", nil, nil, nil, fmt.Errorf("can't instantiate Server: %w", err)
+		return "", nil, nil, fmt.Errorf("can't instantiate Server: %w", err)
 	}
-
-	c.SetClient(p.Update)
 
 	lc := net.ListenConfig{}
 	lis, err := lc.Listen(ctx, "tcp", net.JoinHostPort(gNMIHOST, gNMIPORT))
 	if err != nil {
-		return "", nil, nil, nil, fmt.Errorf("can't set listener: %w", err)
+		return "", nil, nil, fmt.Errorf("can't set listener: %w", err)
 	}
 	opt, err := config.WithSelfTLSCert()
 	if err != nil {
-		return "", nil, nil, nil, fmt.Errorf("can't create self-signed certificate: %w", err)
+		return "", nil, nil, fmt.Errorf("can't create self-signed certificate: %w", err)
 	}
 
 	srv := grpc.NewServer(opt)
 	pb.RegisterGNMIServer(srv, p)
 	go srv.Serve(lis)
 
-	return lis.Addr().String(), p, p.C, func() {
+	return lis.Addr().String(), p, func() {
 		lis.Close()
 	}, nil
 }
 
 // sendUpdatesNew generates an update for each supplied path incrementing the
 // timestamp and value for each using Elem instead of Elements
-func sendUpdatesNew(c *cache.Cache, updates map[string][]string, timestamp *time.Time) {
+func sendUpdates(c *cache.Cache, updates map[string][]string, timestamp *time.Time) {
 	*timestamp = timestamp.Add(time.Nanosecond)
 
 	for device, paths := range updates {
 		stream := make([]*pb.Update, 0, len(paths))
 
 		for _, p := range paths {
-			u, err := path.Parse(p)
+			u, err := path.ParsePath(p)
 			if err != nil {
-				log.Printf("error parsing path %s: %v", p, err)
+				log.Errorf("error parsing path %s: %v", p, err)
 				continue
 			}
 
 			val, err := value.FromScalar(rand.IntN(1000))
 			if err != nil {
-				log.Printf("error creating scalar value for %s: %v", p, err)
+				log.Errorf("error creating scalar value for %s: %v", p, err)
 				continue
 			}
 			update := &pb.Update{
@@ -95,23 +92,31 @@ func sendUpdatesNew(c *cache.Cache, updates map[string][]string, timestamp *time
 			Update:    stream,
 		}
 		if err := c.GnmiUpdate(noti); err != nil {
-			log.Printf("error streaming update to %v: %v", device, err)
+			log.Errorf("error streaming update to %v: %v", device, err)
 		}
 	}
 
 }
 
 func run(ctx context.Context) error {
+
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
-	addr, _, cache, teardown, err := startServer(ctx, client.Path{"dev1", "dev2"})
+	// Setups a Cache for a list of targets
+	targets := client.Path{"dev1", "dev2"}
+	c := cache.New(targets)
+
+	addr, server, teardown, err := startServer(ctx, c)
 	if err != nil {
 		return fmt.Errorf("can't start server: %w", err)
 	}
 	defer teardown()
 
-	log.Printf("listening on %v", addr)
+	// Registers a callback function to receive calls for each update accepted by the cache
+	c.SetClient(server.Update)
+
+	log.Infof("listening on %v", addr)
 
 	updates := map[string][]string{
 		"dev1": {
@@ -131,7 +136,7 @@ func run(ctx context.Context) error {
 			var timestamp time.Time
 			select {
 			case <-ticker.C:
-				sendUpdatesNew(cache, updates, &timestamp)
+				sendUpdates(c, updates, &timestamp)
 			case <-quit:
 				ticker.Stop()
 				return
@@ -151,6 +156,7 @@ func run(ctx context.Context) error {
 }
 
 func main() {
+	flag.Parse()
 	_, err := maxprocs.Set()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error setting GOMAXPROCS: %s\n", err)
