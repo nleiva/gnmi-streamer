@@ -17,20 +17,18 @@ import (
 )
 
 const (
-	gNMIHOST = ""
-	gNMIPORT = "9339"
+	HOST = ""
+	PORT = "9339"
 )
 
 func main() {
 	device := "dev2"
-	count := 0
-	sync := 0
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
 	q := client.Query{
-		Addrs:   []string{net.JoinHostPort(gNMIHOST, gNMIPORT)},
+		Addrs:   []string{net.JoinHostPort(HOST, PORT)},
 		Target:  device,
 		Queries: []client.Path{{"*"}},
 		Type:    client.Stream,
@@ -43,13 +41,11 @@ func main() {
 			switch v := resp.Response.(type) {
 			case *pb.SubscribeResponse_Update:
 				{
-					count++
 					fmt.Printf("RESPONSE:\n  PATH: %v\n  VALUE: %v\n", v.Update.Update[0].Path, v.Update.Update[0].Val)
 				}
 			case *pb.SubscribeResponse_Error:
 				return fmt.Errorf("error in response: %s", v)
 			case *pb.SubscribeResponse_SyncResponse:
-				sync++
 			default:
 				return fmt.Errorf("unknown response %T: %s", v, v)
 			}
@@ -63,6 +59,7 @@ func main() {
 	c := client.BaseClient{}
 
 	err := c.Subscribe(ctx, q, gnmiclient.Type)
+	defer c.Close()
 	if err != nil {
 		log.Fatalf("can't subscribe to gNMI server: %v", err)
 	}

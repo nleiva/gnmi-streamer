@@ -31,7 +31,7 @@ import (
 const (
 	HOST    = ""
 	PORT    = "9339"
-	CADENCE = 5 * time.Second
+	CADENCE = 5
 	UPDATES = "updates.json"
 )
 
@@ -109,7 +109,7 @@ func periodic(period time.Duration, fn func()) {
 	}
 }
 
-func run(ctx context.Context) error {
+func run(ctx context.Context, interval time.Duration) error {
 	// Read Targets config file.
 	u, err := os.Open(UPDATES)
 	if err != nil {
@@ -132,9 +132,10 @@ func run(ctx context.Context) error {
 	// Setups a Cache for the list of targets
 	targets := client.Path(t)
 	c := cache.New(targets)
+
 	// Start functions to periodically update metadata stored in the cache for each target.
-	go periodic(CADENCE, c.UpdateMetadata)
-	go periodic(CADENCE, c.UpdateSize)
+	go periodic(interval, c.UpdateMetadata)
+	go periodic(interval, c.UpdateSize)
 
 	addr, server, teardown, err := startServer(ctx, c)
 	if err != nil {
@@ -147,7 +148,7 @@ func run(ctx context.Context) error {
 
 	log.Infof("listening on %v", addr)
 
-	ticker := time.NewTicker(CADENCE)
+	ticker := time.NewTicker(interval)
 	quit := make(chan struct{})
 	go func() {
 		for {
@@ -181,7 +182,7 @@ func main() {
 		log.Exitf("error setting GOMAXPROCS: %s\n", err)
 	}
 
-	if err := run(context.Background()); err != nil {
+	if err := run(context.Background(), CADENCE*time.Second); err != nil {
 		log.Exitf("error starting the gNMI server: %s\n", err)
 	}
 }
