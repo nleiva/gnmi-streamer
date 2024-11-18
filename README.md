@@ -16,10 +16,6 @@ $ make server
 ### Local
 
 ```bash
-$ cd client
-```
-
-```bash
 $ make client
 2024/11/15 17:52:55 Subscribing
 RESPONSE:
@@ -77,8 +73,6 @@ $ gnmic -a [::]:9339 --skip-verify --target dev1 subscribe --path "/state/router
 
 
 ```bash
-$ unset https_proxy
-$ unset HTTPS_PROXY
 $ gnmic -a [::]:9339 --skip-verify --target dev2 subscribe --path "a" --format prototext
 update: {
   timestamp: -6795364578871345151
@@ -140,8 +134,9 @@ update: {
 
 ## Credits
 
-- [SUBSCRIBE](https://github.com/openconfig/gnmi/tree/master/subscribe)
-- [PATH](https://github.com/openconfig/gnmic/tree/main/pkg/api/path)
+- [SUBSCRIBE SERVER](https://github.com/openconfig/gnmi/tree/master/subscribe)
+- [COLLECTOR](https://github.com/openconfig/gnmi/tree/master/collector)
+- [gNMI PATH](https://github.com/openconfig/gnmic/tree/main/pkg/api/path)
 
 ## References
 
