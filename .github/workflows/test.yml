@@ -13,9 +13,15 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
 
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
-    - run:  go test ./... -v -race -coverprofile=coverage.txt
+    - name: Run tests
+      run: go test -v -race -coverprofile=coverage.txt
 
-    - name: Upload coverage to Codecov
+    - name: Upload results to Codecov
       uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
