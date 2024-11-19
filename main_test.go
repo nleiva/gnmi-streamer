@@ -117,3 +117,30 @@ func TestSubscribeOnce(t *testing.T) {
 
 	}
 }
+
+func TestConfig(t *testing.T) {
+	tt := []struct {
+		name string
+		file string
+		err  string
+	}{
+		{
+			name: "valid file",
+			file: "updates.json",
+		},
+		{
+			name: "invalid file",
+			file: "not-updates.json",
+			err:  "open not-updates.json: no such file or directory",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := os.Open(tc.file)
+			if err != nil && err.Error() != tc.err {
+				t.Errorf("got %v, want %v", err, tc.err)
+			}
+		})
+	}
+}
