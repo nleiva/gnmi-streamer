@@ -2,7 +2,7 @@
 
 [![GoDoc](https://godoc.org/github.com/nleiva/gnmi-streamer?status.svg)](https://godoc.org/github.com/nleiva/gnmi-streamer) 
 [![Test](https://github.com/nleiva/gnmi-streamer/actions/workflows/test.yml/badge.svg)](https://github.com/nleiva/gnmi-streamer/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/nleiva/gnmi-streamer/branch/master/graph/badge.svg)](https://codecov.io/gh/nleiva/gnmi-streamer) 
+[![codecov](https://codecov.io/gh/nleiva/gnmi-streamer/branch/main/graph/badge.svg)](https://codecov.io/gh/nleiva/gnmi-streamer) 
 [![Go Report Card](https://goreportcard.com/badge/github.com/nleiva/gnmi-streamer)](https://goreportcard.com/report/github.com/nleiva/gnmi-streamer)
 
 gNMI Server to stream arbitrary data. It produces a random metric for the targets and data paths listed in a JSON file.
