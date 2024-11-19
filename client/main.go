@@ -30,7 +30,7 @@ func main() {
 	q := client.Query{
 		Addrs:   []string{net.JoinHostPort(HOST, PORT)},
 		Target:  device,
-		Queries: []client.Path{{"*"}},
+		Queries: []client.Path{{"a"}},
 		Type:    client.Stream,
 
 		ProtoHandler: func(msg proto.Message) error {

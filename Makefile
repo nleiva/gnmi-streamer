@@ -24,16 +24,13 @@ test:
 	go test ./... -v -coverprofile=coverage.txt
 
 fmt:
-	go fmt ./...
-
-run: fmt
-	go build && ./$(EXECUTABLE)
+	@go fmt ./...
 
 server: fmt
-	go build && ./$(EXECUTABLE) -logtostderr
+	@go build && ./$(EXECUTABLE) -logtostderr
 
 client: fmt
-	cd client; go run main.go; cd ..
+	@cd client; go run main.go; cd ..
 
 build: fmt test
 	@echo version: $(VERSION)

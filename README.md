@@ -5,34 +5,38 @@
 [![codecov](https://codecov.io/gh/nleiva/gnmi-streamer/branch/master/graph/badge.svg)](https://codecov.io/gh/nleiva/gnmi-streamer) 
 [![Go Report Card](https://goreportcard.com/badge/github.com/nleiva/gnmi-streamer)](https://goreportcard.com/report/github.com/nleiva/gnmi-streamer)
 
+gNMI Server to stream arbitrary data. It produces a random metric for the targets and data paths listed in a JSON file.
+
 ## Server
+
+Run the server on a tab with `make server`.
 
 ```bash
 $ make server
-2024/11/15 17:41:09 listening on [::]:9339
-2024/11/15 17:41:12 peer: 127.0.0.1:44106 target: "dev1" subscription: subscribe:{prefix:{target:"dev1"} subscription:{path:{elem:{name:"state"} elem:{name:"router" key:{key:"router-name" value:"*"}} elem:{name:"interface" key:{key:"interface-name" value:"*"}} elem:{name:"statistics"} elem:{name:"ip"} elem:{name:"in-octets"}}}}
-2024/11/15 17:41:12 start processing Subscription for dev1
-2024/11/15 17:41:12 end processSubscription for dev1
-2024/11/15 17:41:37 peer: 127.0.0.1:44106 target "dev1" subscription: end: "subscribe:{prefix:{target:\"dev1\"} subscription:{path:{elem:{name:\"state\"} elem:{name:\"router\" key:{key:\"router-name\" value:\"*\"}} elem:{name:\"interface\" key:{key:\"interface-name\" value:\"*\"}} elem:{name:\"statistics\"} elem:{name:\"ip\"} elem:{name:\"in-octets\"}}}}"
+I1119 09:02:54.822880   29014 main.go:149] listening on [::]:9339
+I1119 09:03:02.164796   29014 subscribe.go:283] peer: 127.0.0.1:51101 target: "dev2" subscription: subscribe:{prefix:{target:"dev2"} subscription:{path:{element:"a" elem:{name:"a"}}}}
+I1119 09:03:07.014033   29014 subscribe.go:323] peer: 127.0.0.1:51101 target "dev2" subscription: end: "subscribe:{prefix:{target:\"dev2\"} subscription:{path:{element:\"a\" elem:{name:\"a\"}}}}"
 ```
 
 ## Client
 
-### Local
+Run the server on a different tab with `make client`.
 
 ```bash
 $ make client
-2024/11/15 17:52:55 Subscribing
+2024/11/19 09:03:02 Subscribing
 RESPONSE:
-  PATH: elem:{name:"a"} elem:{name:"b" key:{key:"n" value:"c"}} elem:{name:"d"}
-  VALUE: int_val:635
+  PATH: elem:{name:"a"}  elem:{name:"b"  key:{key:"n"  value:"c"}}  elem:{name:"d"}
+  VALUE: int_val:929
 RESPONSE:
-  PATH: elem:{name:"a"} elem:{name:"b" key:{key:"n" value:"c"}} elem:{name:"d"}
-  VALUE: int_val:903
+  PATH: elem:{name:"a"}  elem:{name:"b"  key:{key:"n"  value:"c"}}  elem:{name:"d"}
+  VALUE: int_val:18
 ...
 ```
 
 ### gNMIc
+
+You can alternatively subscribe to the server with [gNMIc](https://gnmic.openconfig.net).
 
 
 ```bash
@@ -45,31 +49,16 @@ $ gnmic -a [::]:9339 --skip-verify --target dev1 subscribe --path "/state/router
   "sync-response": true
 }
 {
-  "source": "[::]:9339",
-  "subscription-name": "default-1731692472",
-  "timestamp": -6795364578871345151,
-  "time": "1754-08-30T22:43:41.128654849Z",
+  "source": ":9339",
+  "subscription-name": "default-1732025210",
+  "timestamp": 1732025204640357001,
+  "time": "2024-11-19T09:06:44.640357001-05:00",
   "target": "dev1",
   "updates": [
     {
       "Path": "state/router[router-name=dev1]/interface[interface-name=*]/statistics/ip/in-octets",
       "values": {
-        "state/router/interface/statistics/ip/in-octets": 5
-      }
-    }
-  ]
-}
-{
-  "source": "[::]:9339",
-  "subscription-name": "default-1731692472",
-  "timestamp": -6795364578871345151,
-  "time": "1754-08-30T22:43:41.128654849Z",
-  "target": "dev1",
-  "updates": [
-    {
-      "Path": "state/router[router-name=dev1]/interface[interface-name=*]/statistics/ip/in-octets",
-      "values": {
-        "state/router/interface/statistics/ip/in-octets": 783
+        "state/router/interface/statistics/ip/in-octets": 213
       }
     }
   ]
@@ -79,37 +68,10 @@ $ gnmic -a [::]:9339 --skip-verify --target dev1 subscribe --path "/state/router
 
 ```bash
 $ gnmic -a [::]:9339 --skip-verify --target dev2 subscribe --path "a" --format prototext
-update: {
-  timestamp: -6795364578871345151
-  prefix: {
-    target: "dev2"
-  }
-  update: {
-    path: {
-      elem: {
-        name: "a"
-      }
-      elem: {
-        name: "b"
-        key: {
-          key: "n"
-          value: "c"
-        }
-      }
-      elem: {
-        name: "d"
-      }
-    }
-    val: {
-      int_val: 81
-    }
-  }
-}
-
 sync_response: true
 
 update: {
-  timestamp: -6795364578871345151
+  timestamp: 1732025259640538002
   prefix: {
     target: "dev2"
   }
@@ -130,7 +92,7 @@ update: {
       }
     }
     val: {
-      int_val: 634
+      int_val: 424
     }
   }
 }
@@ -138,6 +100,8 @@ update: {
 ```
 
 ## Credits
+
+This is copy & paste from the following packages.
 
 - [SUBSCRIBE SERVER](https://github.com/openconfig/gnmi/tree/master/subscribe)
 - [COLLECTOR](https://github.com/openconfig/gnmi/tree/master/collector)
