@@ -20,26 +20,30 @@ func TestMain(m *testing.M) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	stream, err := createCache(UPDATES)
+	if err != nil {
+		fmt.Printf("ERROR creating cache: %v\n", err)
+	}
 	// This is a blocking call, so we run it in the background.
-	go setup(ctx)
+	go setup(ctx, stream)
 
-	// Make sure the server is ready.
-	time.Sleep(10 * time.Second)
+	now := time.Now()
+	sendUpdates(stream.cache, stream.updates, &now)
 
 	// Run test cases
 	code := m.Run()
 
 	// Teardown
 	cancel()
-	time.Sleep(1 * time.Second)
+	time.Sleep(500 * time.Millisecond)
 
 	os.Exit(code)
 }
 
-func setup(ctx context.Context) {
-	err := run(ctx, 1*time.Second)
+func setup(ctx context.Context, s Stream) {
+	err := run(ctx, s)
 	if err != nil {
-		fmt.Printf("ERROR: %v\n", err)
+		fmt.Printf("ERROR setting up server: %v\n", err)
 	}
 }
 

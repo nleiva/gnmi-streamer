@@ -109,46 +109,58 @@ func periodic(period time.Duration, fn func()) {
 	}
 }
 
-func run(ctx context.Context, interval time.Duration) error {
+func createCache(file string) (Stream, error) {
 	// Read Targets config file.
-	u, err := os.Open(UPDATES)
+	u, err := os.Open(file)
 	if err != nil {
-		return fmt.Errorf("can't read Updates file: %w", err)
+		return Stream{}, fmt.Errorf("can't read Updates file: %w", err)
 	}
 	updates, err := GetUpdates(u)
 	if err != nil {
-		return fmt.Errorf("can't parse Updates info: %w", err)
+		return Stream{}, fmt.Errorf("can't parse Updates info: %w", err)
 	}
-
 	// Get Target devices
 	t := make([]string, 0, len(updates))
 	for k := range updates {
 		t = append(t, k)
 	}
 
+	// Setups a Cache for the list of targets
+	targets := client.Path(t)
+
+	return Stream{
+		cache:    cache.New(targets),
+		updates:  updates,
+		interval: CADENCE * time.Second,
+	}, nil
+}
+
+type Stream struct {
+	cache    *cache.Cache
+	updates  Updates
+	interval time.Duration
+}
+
+func run(ctx context.Context, stream Stream) error {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
-	// Setups a Cache for the list of targets
-	targets := client.Path(t)
-	c := cache.New(targets)
-
 	// Start functions to periodically update metadata stored in the cache for each target.
-	go periodic(interval, c.UpdateMetadata)
-	go periodic(interval, c.UpdateSize)
+	go periodic(stream.interval, stream.cache.UpdateMetadata)
+	go periodic(stream.interval, stream.cache.UpdateSize)
 
-	addr, server, teardown, err := startServer(ctx, c)
+	addr, server, teardown, err := startServer(ctx, stream.cache)
 	if err != nil {
 		return fmt.Errorf("can't start server: %w", err)
 	}
 	defer teardown()
 
 	// Registers a callback function to receive calls for each update accepted by the cache
-	c.SetClient(server.Update)
+	stream.cache.SetClient(server.Update)
 
 	log.Infof("listening on %v", addr)
 
-	ticker := time.NewTicker(interval)
+	ticker := time.NewTicker(stream.interval)
 	quit := make(chan struct{})
 	go func() {
 		for {
@@ -156,7 +168,7 @@ func run(ctx context.Context, interval time.Duration) error {
 			timestamp := time.Now()
 			select {
 			case <-ticker.C:
-				sendUpdates(c, updates, &timestamp)
+				sendUpdates(stream.cache, stream.updates, &timestamp)
 			case <-quit:
 				ticker.Stop()
 				return
@@ -182,7 +194,12 @@ func main() {
 		log.Exitf("error setting GOMAXPROCS: %s\n", err)
 	}
 
-	if err := run(context.Background(), CADENCE*time.Second); err != nil {
+	stream, err := createCache(UPDATES)
+	if err != nil {
+		log.Exitf("error creating cache: %s\n", err)
+	}
+
+	if err := run(context.Background(), stream); err != nil {
 		log.Exitf("error starting the gNMI server: %s\n", err)
 	}
 }
