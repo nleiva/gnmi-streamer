@@ -1,5 +1,10 @@
 # gNMI Streamer
 
+[![GoDoc](https://godoc.org/github.com/nleiva/gnmi-streamer?status.svg)](https://godoc.org/github.com/nleiva/gnmi-streamer) 
+[![Test](https://github.com/nleiva/gnmi-streamer/actions/workflows/test.yml/badge.svg)](https://github.com/nleiva/gnmi-streamer/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/nleiva/gnmi-streamer/branch/master/graph/badge.svg)](https://codecov.io/gh/nleiva/gnmi-streamer) 
+[![Go Report Card](https://goreportcard.com/badge/github.com/nleiva/gnmi-streamer)](https://goreportcard.com/report/github.com/nleiva/gnmi-streamer)
+
 ## Server
 
 ```bash
