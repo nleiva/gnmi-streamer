@@ -5,6 +5,7 @@ Based on: https://github.com/openconfig/gnmi/tree/master/subscribe
 package main
 
 import (
+	"cmp"
 	"context"
 	"flag"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"time"
 
@@ -28,12 +30,20 @@ import (
 	"go.uber.org/automaxprocs/maxprocs"
 )
 
-const (
-	HOST    = ""
-	PORT    = "9339"
-	CADENCE = 5
-	UPDATES = "updates.json"
+var (
+	HOST    = cmp.Or(os.Getenv("GNMI_HOST"), "")
+	PORT    = cmp.Or(os.Getenv("GNMI_PORT"), "9339")
+	FILE    = cmp.Or(os.Getenv("GNMI_FILE"), "updates.json")
+	CADENCE = getEnvInt("GNMI_CADENCE", 5)
 )
+
+func getEnvInt(name string, d int) int {
+	val := os.Getenv(name)
+	if v, err := strconv.Atoi(val); err == nil {
+		return v
+	}
+	return d
+}
 
 func startServer(ctx context.Context, c *cache.Cache, opts ...subscribe.Option) (string, *subscribe.Server, func(), error) {
 	p, err := subscribe.NewServer(c, opts...)
@@ -95,7 +105,6 @@ func sendUpdates(c *cache.Cache, updates map[string][]string, timestamp *time.Ti
 			log.Errorf("error streaming update to %v: %v", device, err)
 		}
 	}
-
 }
 
 func periodic(period time.Duration, fn func()) {
@@ -131,7 +140,7 @@ func createCache(file string) (Stream, error) {
 	return Stream{
 		cache:    cache.New(targets),
 		updates:  updates,
-		interval: CADENCE * time.Second,
+		interval: time.Duration(CADENCE) * time.Second,
 	}, nil
 }
 
@@ -193,7 +202,7 @@ func main() {
 		log.Exitf("error setting GOMAXPROCS: %s\n", err)
 	}
 
-	stream, err := createCache(UPDATES)
+	stream, err := createCache(FILE)
 	if err != nil {
 		log.Exitf("error creating cache: %s\n", err)
 	}

@@ -18,6 +18,13 @@ I1119 09:03:02.164796   29014 subscribe.go:283] peer: 127.0.0.1:51101 target: "d
 I1119 09:03:07.014033   29014 subscribe.go:323] peer: 127.0.0.1:51101 target "dev2" subscription: end: "subscribe:{prefix:{target:\"dev2\"} subscription:{path:{element:\"a\" elem:{name:\"a\"}}}}"
 ```
 
+You can configure the following environmental variables:
+
+- `GNMI_HOST`: Server IP address. Default `""`.
+- `GNMI_PORT`: Server port. Default `"9339"`.
+- `GNMI_FILE`: JSON file with list of devices and paths to stream. Default `"updates.json"`.
+- `GNMI_CADENCE`: How often to generate a metric for the device path. Default `5`.
+
 ## Client
 
 Run the server on a different tab with `make client`.
