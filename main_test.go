@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 func setup(ctx context.Context, s Stream) {
 	err := run(ctx, s)
 	if err != nil {
-		fmt.Printf("ERROR setting up server: %v\n", err)
+		log.Fatalf("ERROR setting up server: %v\n", err)
 	}
 }
 
