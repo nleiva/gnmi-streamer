@@ -1,0 +1,14 @@
+[
+    {
+        "dev1": [
+            "/state/router[router-name=dev1]/interface[interface-name=*]/statistics/ip/in-octets",
+            "/state/router[router-name=dev1]/interface[interface-name=*]/statistics/ip/out-octets",
+            "/terminal-device/logical-channels/channel[index=*]/otn/state/esnr/instant"
+        ]
+    },
+    {
+        "dev2": [
+            "/a/b[n=c]/d"
+        ]
+    }
+]

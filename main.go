@@ -164,10 +164,9 @@ func run(ctx context.Context, stream Stream) error {
 	quit := make(chan struct{})
 	go func() {
 		for {
-			//var timestamp time.Time
-			timestamp := time.Now()
 			select {
 			case <-ticker.C:
+				timestamp := time.Now()
 				sendUpdates(stream.cache, stream.updates, &timestamp)
 			case <-quit:
 				ticker.Stop()

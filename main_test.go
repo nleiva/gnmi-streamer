@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"testing"
@@ -20,9 +21,9 @@ func TestMain(m *testing.M) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := createCache(UPDATES)
+	stream, err := createCache("testdata/updates.json")
 	if err != nil {
-		fmt.Printf("ERROR creating cache: %v\n", err)
+		log.Fatalf("ERROR creating cache: %v\n", err)
 	}
 	// This is a blocking call, so we run it in the background.
 	go setup(ctx, stream)
@@ -35,7 +36,7 @@ func TestMain(m *testing.M) {
 
 	// Teardown
 	cancel()
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(300 * time.Millisecond)
 
 	os.Exit(code)
 }
@@ -126,18 +127,23 @@ func TestConfig(t *testing.T) {
 	}{
 		{
 			name: "valid file",
-			file: "updates.json",
+			file: "testdata/updates.json",
 		},
 		{
 			name: "invalid file",
-			file: "not-updates.json",
-			err:  "open not-updates.json: no such file or directory",
+			file: "testdata/not-updates.json",
+			err:  "can't read Updates file: open testdata/not-updates.json: no such file or directory",
+		},
+		{
+			name: "invalid file format",
+			file: "testdata/wrong-updates.json",
+			err:  "can't parse Updates info: can't decode Targets file: can't decode object: json: cannot unmarshal array into Go value of type main.Updates",
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := os.Open(tc.file)
+			_, err := createCache(tc.file)
 			if err != nil && err.Error() != tc.err {
 				t.Errorf("got %v, want %v", err, tc.err)
 			}
