@@ -1,3 +1,4 @@
 .vscode
 gnmi-streamer
 coverage.txt
+dist/
