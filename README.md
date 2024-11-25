@@ -9,7 +9,7 @@ gNMI Server to stream arbitrary data. It produces a random metric for the target
 
 ## Server
 
-Run the server on a tab with `make server`.
+If you have Go installed in your system, run the server on a tab with `make server`.
 
 ```bash
 $ make server
@@ -24,6 +24,14 @@ You can configure the following environmental variables:
 - `GNMI_PORT`: Server port. Default `"9339"`.
 - `GNMI_FILE`: JSON file with list of devices and paths to stream. Default `"updates.json"`.
 - `GNMI_CADENCE`: How often to generate a metric for the device path. Default `5`.
+
+If you don't have Go installed, you can run one of the executable files available in the [releases](https://github.com/nleiva/gnmi-streamer/releases). For example for a RHEL system:
+
+```bash
+wget https://github.com/nleiva/gnmi-streamer/releases/download/v0.1.0/gnmi-streamer_0.1.0_Linux_x86_64.rpm ## Download RPM
+rpm -i gnmi-streamer_0.1.0_Linux_x86_64.rpm # Install RPM
+gnmi-streamer -logtostderr # Run the server and log to stdout
+```
 
 ## Client
 
